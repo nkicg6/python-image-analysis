@@ -1,0 +1,111 @@
+#+TITLE: Python functions for figures and analysis
+#+DATE: 2017-09-07
+#+OPTIONS: toc:nil author:nil title:nil date:nil num:nil ^:{} \n:1 todo:nil
+#+PROPERTY: header-args :exports both :eval no :tangle imageanalysis.py
+#+LATEX_HEADER: \usepackage[margin=1.0in]{geometry}
+#+LATEX_HEADER: \hypersetup{citecolor=black,colorlinks=true,urlcolor=blue,linkbordercolor=blue,pdfborderstyle={/S/U/W 1}}
+#+LATEX_HEADER: \usepackage[round]{natbib}
+#+LATEX_HEADER: \renewcommand{\bibsection}
+
+This document is a work in progress and contains useful python functions I have discovered or written to aid in image analysis of microscopy data and making figures for presentations. Most of my work is done in python or R and I use Emacs [[http://orgmode.org/][Org-mode]] for [[http://www.literateprogramming.com/knuthweb.pdf][literate programming]]. 
+My goal for writing scientific papers is to work in org-mode and have all my figures generated programmatically when the document compiles to PDF. This makes the work more reproducible and easier to work with. I will be adding to this document as I work and learn. Most of it will not be org-mode specific, except where indicated. 
+
+This document is [[http://orgmode.org/manual/Extracting-source-code.html][tangled]] into the accompanying python source doc in the repo and can be downloaded and used freely.
+
+When my workflow is more mature, I plan on integrating these functions into a class.
+
+Suggestions and contributions welcome!
+* Links and resources
+Here is a collection of links and resources I have come across. 
+/TODO/ 
+
+* Making figures
+
+** Basics
+
+The first step is to read images. For this, we use a python wrapper around the [[https://www.openmicroscopy.org/bio-formats/][OME Bioformats]] command line tool [[https://docs.openmicroscopy.org/bio-formats/5.7.0/users/comlinetools/index.html][bfconvert]]. I wrote a python wrapper around bfconvert that will convert images or directories and store them in a dedicated folder for easier use and organization. This script and the documentation is [[https://github.com/nkicg6/tif-convert][available on github]]. 
+
+Next, images are read in using skimage like so 
+
+#+BEGIN_SRC python :results output
+  import skimage.io
+  from skimage import img_as_float
+
+  def read_img(path, asfloat=True):
+      img = skimage.io.imread(path)
+      if not asfloat:
+          return img
+      img = img_as_float(img)
+      return img
+
+#+END_SRC
+
+Typically, images are read asfloat, as skimage operations are performed on floating point. 
+
+** Parse metadata
+   
+Images are converted to [[https://www.openmicroscopy.org/][OME-Tiff]] format because this is an open source data format that preserves all metadata and can be opened by virtually any image reader. The following function will uses the =tifffile= library to read the image metadata from the first page of the tiff file. 
+
+#+NAME: Parse metadata
+#+BEGIN_SRC python :results output
+  import tifffile
+
+
+  def metadata(path):
+      """accepts the path to an ome-tif file, validates image 
+      dimensions, returns pixel size and units
+      following ome-tif xml schema:
+      http://www.openmicroscopy.org/Schemas/OME/2016-06"""
+      try:
+          with tifffile.TiffFile(path) as tif:
+              raw_metadata = tif[0].image_description
+              parse = parse = ET.fromstring(raw_metadata)
+              pixels = parse.find('.//{http://www.openmicroscopy.org/Schemas/OME/2016-06}Pixels')
+              # ensure all pixel units are the same
+              assert pixels.get('PhysicalSizeXUnit') == pixels.get('PhysicalSizeZUnit') == \
+              pixels.get('PhysicalSizeYUnit')
+              # save units
+              units = pixels.get('PhysicalSizeXUnit')
+              # ensure x-size = y-size
+              assert pixels.get('PhysicalSizeY') == pixels.get('PhysicalSizeX')
+              # save pixel size
+              size = pixels.get('PhysicalSizeY')
+              # Z can be easily implemented (pizels.get(PhysicalSizeZ))
+              return float(size), units
+      except AssertionError:
+          print("Image dimensions or units do not match")
+      except ValueError as e:
+          print("Incompatible format >>> {}".format(e))
+      except Exception as x:
+          print("Error. >>> {}".format(x))
+
+#+END_SRC
+
+** add scalebar
+
+use the [[https://pypi.python.org/pypi/matplotlib-scalebar][matplotlib-scalebar]] class. Here are some common arguments I like.
+
+#+NAME: scalebar class
+#+BEGIN_SRC python :results output
+  scalebar = ScaleBar(pixelLength, units, location = 'lower right', 
+                     fixed_value = 25, color = 'black', frameon = False)
+#+END_SRC
+
+Here is a function to use it in a figure. 
+
+#+NAME: Image with scalebar
+#+BEGIN_SRC python :results output
+  def scale_plot(img, imageSize, scale, units, color):
+      plt.figure(figsize=imageSize)
+      plt.imshow(img)
+      plt.axis('off')
+      scalebar = ScaleBar(scale, units, location = 'lower right', 
+                          fixed_value = 25, color = color, frameon = False)
+      plt.gca().add_artist(scalebar)
+#+END_SRC
+
+** Subplots
+   /TODO/ 
+
+
+
