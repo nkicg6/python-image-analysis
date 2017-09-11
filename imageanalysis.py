@@ -8,12 +8,11 @@ def read_img(path, asfloat=True):
     img = img_as_float(img)
     return img
 
-
 import tifffile
-
+import xml.etree.ElementTree as ET
 
 def metadata(path):
-    """accepts the path to an ome-tif file, validates image
+    """accepts the path to an ome-tif file, validates image 
     dimensions, returns pixel size and units
     following ome-tif xml schema:
     http://www.openmicroscopy.org/Schemas/OME/2016-06"""
@@ -40,15 +39,16 @@ def metadata(path):
     except Exception as x:
         print("Error. >>> {}".format(x))
 
+import matplotlib.pyplot as plt
+from matplotlib_scalebar.scalebar import ScaleBar
 
-scalebar = ScaleBar(pixelLength, units, location = 'lower right',
+scalebar = ScaleBar(pixelLength, units, location = 'lower right', 
                    fixed_value = 25, color = 'black', frameon = False)
-
 
 def scale_plot(img, imageSize, scale, units, color):
     plt.figure(figsize=imageSize)
     plt.imshow(img)
     plt.axis('off')
-    scalebar = ScaleBar(scale, units, location = 'lower right',
+    scalebar = ScaleBar(scale, units, location = 'lower right', 
                         fixed_value = 25, color = color, frameon = False)
     plt.gca().add_artist(scalebar)

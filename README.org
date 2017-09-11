@@ -49,7 +49,7 @@ Images are converted to [[https://www.openmicroscopy.org/][OME-Tiff]] format bec
 #+NAME: Parse metadata
 #+BEGIN_SRC python :results output
   import tifffile
-
+  import xml.etree.ElementTree as ET
 
   def metadata(path):
       """accepts the path to an ome-tif file, validates image 
@@ -87,6 +87,9 @@ use the [[https://pypi.python.org/pypi/matplotlib-scalebar][matplotlib-scalebar]
 
 #+NAME: scalebar class
 #+BEGIN_SRC python :results output
+  import matplotlib.pyplot as plt
+  from matplotlib_scalebar.scalebar import ScaleBar
+
   scalebar = ScaleBar(pixelLength, units, location = 'lower right', 
                      fixed_value = 25, color = 'black', frameon = False)
 #+END_SRC
