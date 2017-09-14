@@ -1,7 +1,7 @@
 #+TITLE: Python functions for figures and analysis
 #+DATE: 2017-09-07
 #+OPTIONS: toc:nil author:nil title:nil date:nil num:nil ^:{} \n:1 todo:nil
-#+PROPERTY: header-args :exports both :eval no :tangle imageanalysis.py
+#+PROPERTY: header-args :exports both :eval no-export :tangle imageanalysis.py
 #+LATEX_HEADER: \usepackage[margin=1.0in]{geometry}
 #+LATEX_HEADER: \hypersetup{citecolor=black,colorlinks=true,urlcolor=blue,linkbordercolor=blue,pdfborderstyle={/S/U/W 1}}
 #+LATEX_HEADER: \usepackage[round]{natbib}
@@ -48,30 +48,51 @@ Images are converted to [[https://www.openmicroscopy.org/][OME-Tiff]] format bec
 
 #+NAME: Parse metadata
 #+BEGIN_SRC python :results output
+
+
+  import re
   import tifffile
   import xml.etree.ElementTree as ET
 
+
   def metadata(path):
-      """accepts the path to an ome-tif file, validates image 
-      dimensions, returns pixel size and units
+      """accepts the path to an ome-tif file, or imageJ tif file.
+      Attempts to validates image dimensions, returns pixel size 
+      and units
       following ome-tif xml schema:
       http://www.openmicroscopy.org/Schemas/OME/2016-06"""
       try:
           with tifffile.TiffFile(path) as tif:
-              raw_metadata = tif[0].image_description
-              parse = parse = ET.fromstring(raw_metadata)
-              pixels = parse.find('.//{http://www.openmicroscopy.org/Schemas/OME/2016-06}Pixels')
-              # ensure all pixel units are the same
-              assert pixels.get('PhysicalSizeXUnit') == pixels.get('PhysicalSizeZUnit') == \
-              pixels.get('PhysicalSizeYUnit')
-              # save units
-              units = pixels.get('PhysicalSizeXUnit')
-              # ensure x-size = y-size
-              assert pixels.get('PhysicalSizeY') == pixels.get('PhysicalSizeX')
-              # save pixel size
-              size = pixels.get('PhysicalSizeY')
-              # Z can be easily implemented (pizels.get(PhysicalSizeZ))
-              return float(size), units
+              if tif.is_ome:
+                  raw_metadata = tif[0].image_description
+                  parse = ET.fromstring(raw_metadata)
+                  pixels = parse.find('.//{http://www.openmicroscopy.org/Schemas/OME/2016-06}Pixels')
+                  # ensure all pixel units are the same
+                  assert pixels.get('PhysicalSizeXUnit') == pixels.get('PhysicalSizeZUnit') == \
+                  pixels.get('PhysicalSizeYUnit')
+                  units = pixels.get('PhysicalSizeXUnit')
+                  assert pixels.get('PhysicalSizeY') == pixels.get('PhysicalSizeX')
+                  # save pixel size
+                  size = pixels.get('PhysicalSizeY')
+                  # Z can be easily implemented (pizels.get(PhysicalSizeZ))
+                  return float(size), units
+              else:
+                  # hopefully it is imagej format
+                  raw_metadata = tif[0]
+                  # ensure all pixels are the same size
+                  assert raw_metadata.x_resolution == raw_metadata.y_resolution
+                  # imageJ encodes as 'pixels per micron' so we should convert back
+                  size = 1/(raw_metadata.y_resolution[0]/raw_metadata.y_resolution[-1])
+                  check_units = raw_metadata.image_description.decode('utf-8')
+                  # regex to search for units. 
+                  regex_check = re.search('(?<=unit=)\w+',string)
+                  if regex_check.group(0) == 'micron':
+                      # If micron, return Unicode micron
+                      units = '\xb5m'
+                      return float(size), units
+                  else:
+                      return 'Could not determine pixel size. expected micron \
+                      got >> {}'.format(regex_check.group(0))
       except AssertionError:
           print("Image dimensions or units do not match")
       except ValueError as e:
@@ -81,12 +102,52 @@ Images are converted to [[https://www.openmicroscopy.org/][OME-Tiff]] format bec
 
 #+END_SRC
 
+I recently updated this function to also parse ImageJ encoded tifs. When you save a tif from imageJ, it encodes only the essential info in the file. By parsing the tif as explained in the [[https://pypi.python.org/pypi/tifffile/0.4][documentation]] like so:
+
+#+BEGIN_SRC python :results output
+
+
+  import tifffile  
+  neun_path_example = '/Volumes/EXTENSION/RESTREPOLAB/images/neuronavigation/macklin_zeiss/2017-08-01/figures/MAX_2017-08-01_H001-017_img006.tif'
+  with tifffile.TiffFile(neun_path_example) as tif:
+      images = tif.asarray()
+      for page in tif:
+          for tag in page.tags.values():
+              t = tag.name, tag.value
+              print(t)
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+('new_subfile_type', 0)
+('image_width', 2048)
+('image_length', 2048)
+('bits_per_sample', 16)
+('photometric', 1)
+('image_description', b'ImageJ=1.51n\nimages=2\nchannels=2\nmode=grayscale\nunit=micron\nspacing=5.0\nloop=false\nmin=348.0\nmax=2437.0\n')
+('strip_offsets', (367,))
+('samples_per_pixel', 1)
+('rows_per_strip', 2048)
+('strip_byte_counts', (16777216,))
+('x_resolution', (769230, 1000000))
+('y_resolution', (769230, 1000000))
+('resolution_unit', 1)
+('imagej_byte_counts', (12, 32))
+('imagej_metadata', b'IJIJrang\x00\x00\x00\x01@u\xc0\x00\x00\x00\x00\x00@\xa3\n\x00\x00\x00\x00\x00@o \x00\x00\x00\x00\x00@\xa2r\x00\x00\x00\x00\x00')
+#+end_example
+
+You see a different set of results. So in ome-tif files, all the metadata is a xml blob in the =image_description= tag, while in a ImageJ encoded tif, you have to extract it from a series of top level tags. It turns out that these tags exist in the ome-tif ones too, but I think the xml is better to stick with if it is available. Also, it is important to note how ImageJ encodes resolution. It seems to encode a float as a tuple (divide tuple[0] by tuple[-1] for the float) and furthermore this number is =units/pixel=. very weird. I take the inverse to fix it. The imageJ parsing is less robust, but it works. I think =spacing= in =image_description= refers to z-step size but I am not sure. Anyways this seems to work for parsing two tif encoding formats. 
+
+
 ** add scalebar
 
 use the [[https://pypi.python.org/pypi/matplotlib-scalebar][matplotlib-scalebar]] class. Here are some common arguments I like.
 
 #+NAME: scalebar class
 #+BEGIN_SRC python :results output
+
+
   import matplotlib.pyplot as plt
   from matplotlib_scalebar.scalebar import ScaleBar
 
@@ -98,6 +159,8 @@ Here is a function to use it in a figure.
 
 #+NAME: Image with scalebar
 #+BEGIN_SRC python :results output
+
+
   def scale_plot(img, imageSize, scale, units, color):
       plt.figure(figsize=imageSize)
       plt.imshow(img)
@@ -108,7 +171,27 @@ Here is a function to use it in a figure.
 #+END_SRC
 
 ** Subplots
-   /TODO/ 
+
+The following format works well for splitting two channels and merging. 
+
+#+BEGIN_SRC python :results output
 
 
+import matplotlib.pyplot as plt
 
+f, (ax1,ax2,ax3) = plt.subplots(1,3, figsize=(10,10))
+ax1.imshow(trans[300:,:], cmap='gray')
+ax1.axis('off')
+ax1.set_title('Transmitted',size=15)
+ax2.imshow(auto[300:,:])
+ax2.set_title('Autofluorescense',size=15)
+ax2.axis('off')
+ax3.imshow(auto[300:,:])
+ax3.imshow(trans[300:,:], alpha = 0.46,cmap='gray')
+ax3.set_title('Merge', size=15)
+ax3.axis('off')
+plt.tight_layout()
+#+END_SRC
+
+
+more to come...
