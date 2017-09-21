@@ -17,8 +17,14 @@ When my workflow is more mature, I plan on integrating these functions into a cl
 Suggestions and contributions welcome!
 * Links and resources
 Here is a collection of links and resources I have come across. 
-/TODO/ 
-
+- [[http://scikit-image.org/docs/dev/auto_examples/index.html][Scikit image tutorials]] are excellent. This is one of the best resources I have found.
+  - Long walk through of [[http://scikit-image.org/docs/dev/auto_examples/xx_applications/plot_morphology.html#sphx-glr-auto-examples-xx-applications-plot-morphology-py][morphological filtering]] is especially useful.
+- [[https://github.com/scikit-image/skimage-tutorials/blob/3f991ba579b04fdf893654d3fe725a6b736bce2a/lectures/three_dimensional_image_processing.ipynb][Excellent skimage 3D analysis]] tutorial. 
+- The [[https://github.com/scikit-image/skimage-tutorials/blob/3f991ba579b04fdf893654d3fe725a6b736bce2a/lectures/three_dimensional_image_processing.ipynb][scikit-image]] github page contains some excellent tutorials you can walk though as well.
+- A professor at Caltech has some excellent lecture [[http://bi1x.caltech.edu/2015/tutorials/image_processing_1.html][online]] focused on segmenting bacteria from images.
+  - [[http://bi1x.caltech.edu/2015/tutorials/image_processing_2.html][Part 2]]
+  - Other [[http://bi1x.caltech.edu/2015/handouts.html][modules]] from the course
+  - Cool [[http://bi1x.caltech.edu/2015/tutorials/intro_to_python.html][intro to python]]
 * Making figures
 
 ** Basics
@@ -79,7 +85,7 @@ Images are converted to [[https://www.openmicroscopy.org/][OME-Tiff]] format bec
               else:
                   # hopefully it is imagej format
                   raw_metadata = tif[0]
-                  # ensure all pixels are the same size
+                  # ensure xy pixels are the same size
                   assert raw_metadata.x_resolution == raw_metadata.y_resolution
                   # imageJ encodes as 'pixels per micron' so we should convert back
                   size = 1/(raw_metadata.y_resolution[0]/raw_metadata.y_resolution[-1])
@@ -137,8 +143,7 @@ I recently updated this function to also parse ImageJ encoded tifs. When you sav
 ('imagej_metadata', b'IJIJrang\x00\x00\x00\x01@u\xc0\x00\x00\x00\x00\x00@\xa3\n\x00\x00\x00\x00\x00@o \x00\x00\x00\x00\x00@\xa2r\x00\x00\x00\x00\x00')
 #+end_example
 
-You see a different set of results. So in ome-tif files, all the metadata is a xml blob in the =image_description= tag, while in a ImageJ encoded tif, you have to extract it from a series of top level tags. It turns out that these tags exist in the ome-tif ones too, but I think the xml is better to stick with if it is available. Also, it is important to note how ImageJ encodes resolution. It seems to encode a float as a tuple (divide tuple[0] by tuple[-1] for the float) and furthermore this number is =units/pixel=. very weird. I take the inverse to fix it. The imageJ parsing is less robust, but it works. I think =spacing= in =image_description= refers to z-step size but I am not sure. Anyways this seems to work for parsing two tif encoding formats. 
-
+You see a different set of results. So in ome-tif files, all the metadata is a xml blob in the =image_description= tag, while in a ImageJ encoded tif, you have to extract it from a series of top level tags. It turns out that these tags exist in the ome-tif ones too, but I think the xml is better to stick with if it is available. Also, it is important to note how ImageJ encodes resolution. It seems to encode a float as a tuple (divide tuple[0] by tuple[-1] for the float) and furthermore this number is =units/pixel=. very weird. I take the inverse to fix it. The imageJ parsing is less robust and informative, but it works. I think =spacing= in =image_description= refers to z-step size but I am not sure. Anyways this seems to work for parsing two tif encoding formats. 
 
 ** add scalebar
 
@@ -195,3 +200,34 @@ plt.tight_layout()
 
 
 more to come...
+
+* Analysis
+
+Interactive line profiles are cool!
+
+#+NAME: Interactive line profiles
+#+BEGIN_SRC python :results output
+  import matplotlib
+  matplotlib.use('TKAgg') # I don't have matplotlib installed as a framework so I need this..
+  from skimage import data
+  from skimage.viewer import ImageViewer
+  from skimage.viewer.plugins.lineprofile import LineProfile
+
+  def make_profile(image):
+      """ 
+      Takes a 2D image, gives an PyQt image
+      viewer that you can make a ROI on. 
+      returns line profile values
+      """
+      viewer = ImageViewer(image)
+      viewer += LineProfile()
+      _, line = zip(*viewer.show())
+      return line
+
+#+END_SRC
+
+Dray your profile line then close the image. This returns a list of length 1 containing a tuple. The tuple contains the image array and the line profile. Very annoying, but I used argument unpacking with zip(*args) to fix it. I used the tutorial and put them in a function. 
+
+
+
+

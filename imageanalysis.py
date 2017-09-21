@@ -37,7 +37,7 @@ def metadata(path):
             else:
                 # hopefully it is imagej format
                 raw_metadata = tif[0]
-                # ensure all pixels are the same size
+                # ensure xy pixels are the same size
                 assert raw_metadata.x_resolution == raw_metadata.y_resolution
                 # imageJ encodes as 'pixels per micron' so we should convert back
                 size = 1/(raw_metadata.y_resolution[0]/raw_metadata.y_resolution[-1])
@@ -95,3 +95,20 @@ ax3.imshow(trans[300:,:], alpha = 0.46,cmap='gray')
 ax3.set_title('Merge', size=15)
 ax3.axis('off')
 plt.tight_layout()
+
+import matplotlib
+matplotlib.use('TKAgg') # I don't have matplotlib installed as a framework so I need this..
+from skimage import data
+from skimage.viewer import ImageViewer
+from skimage.viewer.plugins.lineprofile import LineProfile
+
+def make_profile(image):
+    """ 
+    Takes a 2D image, gives an PyQt image
+    viewer that you can make a ROI on. 
+    returns line profile values
+    """
+    viewer = ImageViewer(image)
+    viewer += LineProfile()
+    _, line = zip(*viewer.show())
+    return line
