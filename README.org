@@ -91,7 +91,7 @@ Images are converted to [[https://www.openmicroscopy.org/][OME-Tiff]] format bec
                   size = 1/(raw_metadata.y_resolution[0]/raw_metadata.y_resolution[-1])
                   check_units = raw_metadata.image_description.decode('utf-8')
                   # regex to search for units. 
-                  regex_check = re.search('(?<=unit=)\w+',string)
+                  regex_check = re.search('(?<=unit=)\w+',check_units)
                   if regex_check.group(0) == 'micron':
                       # If micron, return Unicode micron
                       units = '\xb5m'
