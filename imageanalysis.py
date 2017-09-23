@@ -86,12 +86,12 @@ scalebar = ScaleBar(pixelLength, units, location = 'lower right',
 import matplotlib.pyplot as plt
 from matplotlib_scalebar.scalebar import ScaleBar
 
-def scale_plot(img, imageSize, scale, units, color):
+def scale_plot(img, imageSize, scale, units, scalebar_length, color):
     plt.figure(figsize=imageSize)
     plt.imshow(img)
     plt.axis('off')
     scalebar = ScaleBar(scale, units, location = 'lower right', 
-                        fixed_value = 25, color = color, frameon = False)
+                        fixed_value = scalebar_length, color = color, frameon = False)
     plt.gca().add_artist(scalebar)
 
 # create three channel image from 2 channel
@@ -142,3 +142,11 @@ def make_profile(image):
     viewer += LineProfile()
     _, line = zip(*viewer.show())
     return line
+
+# compare image channels with SSIM
+
+import skimage.measure
+
+score, diff = skimage.measure.compare_ssim(image[0,:,:], image[1,:,:], full=True,
+                                           gaussian_weights=True, sigma=1.5, 
+                                           use_sample_covariance=False)

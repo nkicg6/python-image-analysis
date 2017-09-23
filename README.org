@@ -179,12 +179,12 @@ Here is a function to use it in a figure.
   import matplotlib.pyplot as plt
   from matplotlib_scalebar.scalebar import ScaleBar
 
-  def scale_plot(img, imageSize, scale, units, color):
+  def scale_plot(img, imageSize, scale, units, scalebar_length, color):
       plt.figure(figsize=imageSize)
       plt.imshow(img)
       plt.axis('off')
       scalebar = ScaleBar(scale, units, location = 'lower right', 
-                          fixed_value = 25, color = color, frameon = False)
+                          fixed_value = scalebar_length, color = color, frameon = False)
       plt.gca().add_artist(scalebar)
 #+END_SRC
 
@@ -264,6 +264,18 @@ Interactive line profiles are cool!
 
 Dray your profile line then close the image. This returns a list of length 1 containing a tuple. The tuple contains the image array and the line profile. Very annoying, but I used argument unpacking with zip(*args) to fix it. I used the tutorial and put them in a function. 
 
+How similar are your images? You can use structured similarity index (SSIM) to get an indication. 
 
+#+BEGIN_SRC python :results output
 
+  # compare image channels with SSIM
+
+  import skimage.measure
+
+  score, diff = skimage.measure.compare_ssim(image[0,:,:], image[1,:,:], full=True,
+                                             gaussian_weights=True, sigma=1.5, 
+                                             use_sample_covariance=False)
+#+END_SRC
+
+a score of 1 is most similar and a score of -1 is least similar. See the [[http://scikit-image.org/docs/0.13.x/api/skimage.measure.html#skimage.measure.compare_ssim][skimage documentation]] and the [[https://ece.uwaterloo.ca/~z70wang/publications/ssim.pdf][paper]]. 
 
