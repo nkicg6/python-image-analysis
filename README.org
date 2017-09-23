@@ -12,9 +12,10 @@ My goal for writing scientific papers is to work in org-mode and have all my fig
 
 This document is [[http://orgmode.org/manual/Extracting-source-code.html][tangled]] into the accompanying python source doc in the repo and can be downloaded and used freely.
 
-When my workflow is more mature, I plan on integrating these functions into a class.
+* As a module
+I am working on integrating these into a PyPi module. I made a class to contain images and the accompanying metadata which is [[https://github.com/nkicg6/imagetools][here]]. I will keep updating this as I go/need. 
 
-Suggestions and contributions welcome!
+Suggestions and contributions to either project are welcome!
 * Links and resources
 Here is a collection of links and resources I have come across. 
 - [[http://scikit-image.org/docs/dev/auto_examples/index.html][Scikit image tutorials]] are excellent. This is one of the best resources I have found.
@@ -34,10 +35,14 @@ The first step is to read images. For this, we use a python wrapper around the [
 Next, images are read in using skimage like so 
 
 #+BEGIN_SRC python :results output
+
+
+  # using scikit-image to read images
+
   import skimage.io
   from skimage import img_as_float
 
-  def read_img(path, asfloat=True):
+  def read_img(path, asfloat=False):
       img = skimage.io.imread(path)
       if not asfloat:
           return img
@@ -46,7 +51,6 @@ Next, images are read in using skimage like so
 
 #+END_SRC
 
-Typically, images are read asfloat, as skimage operations are performed on floating point. 
 
 ** Parse metadata
    
@@ -55,6 +59,8 @@ Images are converted to [[https://www.openmicroscopy.org/][OME-Tiff]] format bec
 #+NAME: Parse metadata
 #+BEGIN_SRC python :results output
 
+
+  # my function for parsing metadata from ome-tiffs and imagej tiffs
 
   import re
   import tifffile
@@ -113,6 +119,8 @@ I recently updated this function to also parse ImageJ encoded tifs. When you sav
 #+BEGIN_SRC python :results output
 
 
+  # example of metadata returned form an imageJ tif
+
   import tifffile  
   neun_path_example = '/Volumes/EXTENSION/RESTREPOLAB/images/neuronavigation/macklin_zeiss/2017-08-01/figures/MAX_2017-08-01_H001-017_img006.tif'
   with tifffile.TiffFile(neun_path_example) as tif:
@@ -151,7 +159,7 @@ use the [[https://pypi.python.org/pypi/matplotlib-scalebar][matplotlib-scalebar]
 
 #+NAME: scalebar class
 #+BEGIN_SRC python :results output
-
+  # example of a scalebar
 
   import matplotlib.pyplot as plt
   from matplotlib_scalebar.scalebar import ScaleBar
@@ -166,6 +174,11 @@ Here is a function to use it in a figure.
 #+BEGIN_SRC python :results output
 
 
+  # function for plotting an image with a scalebar
+
+  import matplotlib.pyplot as plt
+  from matplotlib_scalebar.scalebar import ScaleBar
+
   def scale_plot(img, imageSize, scale, units, color):
       plt.figure(figsize=imageSize)
       plt.imshow(img)
@@ -177,25 +190,43 @@ Here is a function to use it in a figure.
 
 ** Subplots
 
-The following format works well for splitting two channels and merging. 
+The following format works well for splitting two channels and merging. Some of my microscopy images are only two channels. To plot these, I add an extra channel of zeros. To do this, do the following:
 
 #+BEGIN_SRC python :results output
 
 
-import matplotlib.pyplot as plt
+  # create three channel image from 2 channel
 
-f, (ax1,ax2,ax3) = plt.subplots(1,3, figsize=(10,10))
-ax1.imshow(trans[300:,:], cmap='gray')
-ax1.axis('off')
-ax1.set_title('Transmitted',size=15)
-ax2.imshow(auto[300:,:])
-ax2.set_title('Autofluorescense',size=15)
-ax2.axis('off')
-ax3.imshow(auto[300:,:])
-ax3.imshow(trans[300:,:], alpha = 0.46,cmap='gray')
-ax3.set_title('Merge', size=15)
-ax3.axis('off')
-plt.tight_layout()
+
+  import numpy as np
+
+  equal3 =np.dstack((auto_channel_equal,neun_channel_equal, 
+                     np.zeros_like(neun_channel_equal)))
+#+END_SRC 
+
+#+BEGIN_SRC python :results output
+
+
+  # plot 2 channels of an image with scalebar
+
+  import matplotlib.pyplot as plt
+  from matplotlib_scalebar.scalebar import ScaleBar
+
+
+  f, (ax1,ax2,ax3) = plt.subplots(1,3, figsize=(20,20))
+  ax1.imshow(equal3[:,:,0], cmap="Greens_r") # note colormap
+  ax1.axis('off')
+  ax1.set_title('Autofluorescence',size=15)
+  ax2.imshow(equal3[:,:,1],cmap="Reds_r") # note colormap
+  ax2.set_title('NeuN',size=15)
+  ax2.axis('off')
+  scalebar = ScaleBar(neun_size, units, location = 'lower right', 
+                          fixed_value = 300, color = 'white', frameon = False)
+  ax3.imshow(equal3)
+  plt.gca().add_artist(scalebar)
+  ax3.set_title('Merge', size=15)
+  ax3.axis('off')
+  plt.tight_layout()
 #+END_SRC
 
 
@@ -207,6 +238,11 @@ Interactive line profiles are cool!
 
 #+NAME: Interactive line profiles
 #+BEGIN_SRC python :results output
+
+
+  # draw a line profile interactively
+
+
   import matplotlib
   matplotlib.use('TKAgg') # I don't have matplotlib installed as a framework so I need this..
   from skimage import data

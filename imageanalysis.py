@@ -1,12 +1,16 @@
+# using scikit-image to read images
+
 import skimage.io
 from skimage import img_as_float
 
-def read_img(path, asfloat=True):
+def read_img(path, asfloat=False):
     img = skimage.io.imread(path)
     if not asfloat:
         return img
     img = img_as_float(img)
     return img
+
+# my function for parsing metadata from ome-tiffs and imagej tiffs
 
 import re
 import tifffile
@@ -58,6 +62,8 @@ def metadata(path):
     except Exception as x:
         print("Error. >>> {}".format(x))
 
+# example of metadata returned form an imageJ tif
+
 import tifffile  
 neun_path_example = '/Volumes/EXTENSION/RESTREPOLAB/images/neuronavigation/macklin_zeiss/2017-08-01/figures/MAX_2017-08-01_H001-017_img006.tif'
 with tifffile.TiffFile(neun_path_example) as tif:
@@ -67,11 +73,18 @@ with tifffile.TiffFile(neun_path_example) as tif:
             t = tag.name, tag.value
             print(t)
 
+# example of a scalebar
+
 import matplotlib.pyplot as plt
 from matplotlib_scalebar.scalebar import ScaleBar
 
 scalebar = ScaleBar(pixelLength, units, location = 'lower right', 
                    fixed_value = 25, color = 'black', frameon = False)
+
+# function for plotting an image with a scalebar
+
+import matplotlib.pyplot as plt
+from matplotlib_scalebar.scalebar import ScaleBar
 
 def scale_plot(img, imageSize, scale, units, color):
     plt.figure(figsize=imageSize)
@@ -81,20 +94,37 @@ def scale_plot(img, imageSize, scale, units, color):
                         fixed_value = 25, color = color, frameon = False)
     plt.gca().add_artist(scalebar)
 
-import matplotlib.pyplot as plt
+# create three channel image from 2 channel
 
-f, (ax1,ax2,ax3) = plt.subplots(1,3, figsize=(10,10))
-ax1.imshow(trans[300:,:], cmap='gray')
+
+import numpy as np
+
+equal3 =np.dstack((auto_channel_equal,neun_channel_equal, 
+                   np.zeros_like(neun_channel_equal)))
+
+# plot 2 channels of an image with scalebar
+
+import matplotlib.pyplot as plt
+from matplotlib_scalebar.scalebar import ScaleBar
+
+
+f, (ax1,ax2,ax3) = plt.subplots(1,3, figsize=(20,20))
+ax1.imshow(equal3[:,:,0], cmap="Greens_r") # note colormap
 ax1.axis('off')
-ax1.set_title('Transmitted',size=15)
-ax2.imshow(auto[300:,:])
-ax2.set_title('Autofluorescense',size=15)
+ax1.set_title('Autofluorescence',size=15)
+ax2.imshow(equal3[:,:,1],cmap="Reds_r") # note colormap
+ax2.set_title('NeuN',size=15)
 ax2.axis('off')
-ax3.imshow(auto[300:,:])
-ax3.imshow(trans[300:,:], alpha = 0.46,cmap='gray')
+scalebar = ScaleBar(neun_size, units, location = 'lower right', 
+                        fixed_value = 300, color = 'white', frameon = False)
+ax3.imshow(equal3)
+plt.gca().add_artist(scalebar)
 ax3.set_title('Merge', size=15)
 ax3.axis('off')
 plt.tight_layout()
+
+# draw a line profile interactively
+
 
 import matplotlib
 matplotlib.use('TKAgg') # I don't have matplotlib installed as a framework so I need this..
