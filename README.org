@@ -21,7 +21,9 @@ Here is a collection of links and resources I have come across.
 - [[http://scikit-image.org/docs/dev/auto_examples/index.html][Scikit image tutorials]] are excellent. This is one of the best resources I have found.
   - Long walk through of [[http://scikit-image.org/docs/dev/auto_examples/xx_applications/plot_morphology.html#sphx-glr-auto-examples-xx-applications-plot-morphology-py][morphological filtering]] is especially useful.
 - [[https://github.com/scikit-image/skimage-tutorials/blob/3f991ba579b04fdf893654d3fe725a6b736bce2a/lectures/three_dimensional_image_processing.ipynb][Excellent skimage 3D analysis]] tutorial. 
-- The [[https://github.com/scikit-image/skimage-tutorials/blob/3f991ba579b04fdf893654d3fe725a6b736bce2a/lectures/three_dimensional_image_processing.ipynb][scikit-image]] github page contains some excellent tutorials you can walk though as well.
+- The [[https://github.com/scikit-image/skimage-tutorials/blob/3f991ba579b04fdf893654d3fe725a6b736bce2a/lectures/three_dimensional_image_processing.ipynb][scikit-image]] github page contains some excellent tutorials you can walk though as well
+- Great segmentation [[http://flothesof.github.io/removing-background-scikit-image.html][notebook]]
+- [[https://zulko.github.io/blog/2014/11/13/things-you-can-do-with-python-and-pov-ray/][Moviepy]] seems cool. 
 - A professor at Caltech has some excellent lecture [[http://bi1x.caltech.edu/2015/tutorials/image_processing_1.html][online]] focused on segmenting bacteria from images.
   - [[http://bi1x.caltech.edu/2015/tutorials/image_processing_2.html][Part 2]]
   - Other [[http://bi1x.caltech.edu/2015/handouts.html][modules]] from the course
