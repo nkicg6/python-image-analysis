@@ -239,7 +239,7 @@ Gives the following figure
 #+ATTR_LATEX: :placement [H]
 [[file:img/three_panel.png]]
 
-*** COMMENT cooler
+*** cooler
 
 #+NAME: Three panel with linescans underneath
 #+BEGIN_SRC python :session example :results silent
