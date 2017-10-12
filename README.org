@@ -406,27 +406,29 @@ The following format works well for splitting two channels and merging. Some of 
 
 
 
-#+BEGIN_SRC python :session example :results output :exports both
+#+BEGIN_SRC python :session example :results silent :exports both
 
   two_channel_image = np.random.rand(250,250,2)
   now_three =np.dstack((two_channel_image[:,:,0], two_channel_image[:,:,1], 
                         np.zeros_like(two_channel_image[:,:,0])))
 
   # plot 2 channels of an image with scalebar
-
-  f, (ax1,ax2,ax3) = plt.subplots(1,3, figsize=(20,20))
-  ax1.imshow(now_three[:,:,0], cmap="Greens_r") # note colormap
-  ax1.axis('off')
-  ax1.set_title('Channel 1',size=15)
-  ax2.imshow(now_three[:,:,1] ,cmap="Reds_r") # note colormap
-  ax2.set_title('Channel 2',size=15)
-  ax2.axis('off')
+  fig = plt.figure(figsize=(10,10))
+  one = fig.add_subplot(131)
+  plt.imshow(now_three[:,:,0], cmap="Greens_r") # note colormap
+  one.axis('off')
+  one.set_title('Channel 1',size=15)
+  two = fig.add_subplot(132)
+  plt.imshow(now_three[:,:,1] ,cmap="Reds_r") # note colormap
+  two.set_title('Channel 2',size=15)
+  two.axis('off')
   scalebar = ScaleBar(1, units, location = 'lower right', 
                           fixed_value = 25, color = 'black', frameon = True)
-  ax3.imshow(equal3)
+  three = fig.add_subplot(133)
+  plt.imshow(now_three)
   plt.gca().add_artist(scalebar)
-  ax3.set_title('Merge', size=15)
-  ax3.axis('off')
+  three.set_title('Merge', size=15)
+  three.axis('off')
   plt.tight_layout()
   fig.savefig('img/fake_channels.png', bbox_inches='tight')
 
