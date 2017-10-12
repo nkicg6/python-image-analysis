@@ -204,6 +204,7 @@ Here is a function to use it in a figure.
 #+NAME: Simple three panel figure
 #+BEGIN_SRC python :session example :results output
   ## example data
+  from matplotlib_scalebar.scalebar import ScaleBar
   import numpy as np # for image example
 
   np.random.seed(0)
@@ -231,6 +232,7 @@ Here is a function to use it in a figure.
   plt.savefig('img/three_panel.png',bbox_inches='tight')
 #+END_SRC
 
+
 Gives the following figure
 
 #+ATTR_HTML: :width 50% :height 50%
@@ -240,7 +242,7 @@ Gives the following figure
 *** COMMENT cooler
 
 #+NAME: Three panel with linescans underneath
-#+BEGIN_SRC python :session example :results output
+#+BEGIN_SRC python :session example :results silent
   import skimage.measure
   # make line profiles
 
@@ -264,7 +266,7 @@ Gives the following figure
   fig.suptitle('1040nm exposure', fontsize=15)
   one = fig.add_subplot(231)
   plt.imshow(example_image[:,:,0], cmap='gray')
-  plt.plot([start_coords[0],stop_coords[0]], [start_coords[1],stop_coords[1]],'w-')
+  plt.plot([start_coords[0],stop_coords[0]], [start_coords[1],stop_coords[1]],'r-', linewidth=4)
   one.set_title('Start exposure', fontsize=15)
   plt.axis('off')
   onescan = fig.add_subplot(234)
@@ -279,7 +281,7 @@ Gives the following figure
   two = fig.add_subplot(232)
   two.set_title('22 s', fontsize=15)
   plt.imshow(example_image[:,:,1], cmap='gray')
-  plt.plot([start_coords[0],stop_coords[0]], [start_coords[1],stop_coords[1]],'w-')
+  plt.plot([start_coords[0],stop_coords[0]], [start_coords[1],stop_coords[1]],'r-', linewidth=4)
   plt.axis('off')
   middlescan = fig.add_subplot(235)
   plt.plot(line_axis, middle_y_line,'-', color='black')
@@ -289,7 +291,7 @@ Gives the following figure
   #column3
   three = fig.add_subplot(233)
   plt.imshow(example_image[:,:,2], cmap='gray')
-  plt.plot([start_coords[0],stop_coords[0]], [start_coords[1],stop_coords[1]],'w-')
+  plt.plot([start_coords[0],stop_coords[0]], [start_coords[1],stop_coords[1]],'r-', linewidth=4)
   three.set_title('45 s', fontsize=15)
   plt.axis('off')
   scalebar = ScaleBar(1,'um',location='lower right', fixed_value=25,color = 'black', frameon=True)
@@ -302,6 +304,7 @@ Gives the following figure
   fig.savefig('img/three_panel_with_scans.png', bbox_inches='tight')
 #+END_SRC
 
+
 That code generates the figure below
 
 
@@ -311,7 +314,7 @@ That code generates the figure below
 *** In a row
 
 #+NAME: Three panel in a row
-#+BEGIN_SRC python :session example :results output
+#+BEGIN_SRC python :session example :results silent
 
   np.random.seed(0)
   example_image = np.random.rand(250,250,3)
@@ -366,11 +369,13 @@ That code generates the figure below
   plt.subplots_adjust(wspace=None)
   fig.savefig('img/in_a_row.png', bbox_inches='tight')
 #+END_SRC
+
 How about in a row?
 
 
 #+ATTR_LATEX: :placement [H]
 [[file:img/in_a_row.png]]
+
 ** Subplots
 
 The following format works well for splitting two channels and merging. Some of my microscopy images are only two channels. To plot these, I add an extra channel of zeros. To do this, do the following:
@@ -409,7 +414,7 @@ The following format works well for splitting two channels and merging. Some of 
 
   # plot 2 channels of an image with scalebar
 
-   f, (ax1,ax2,ax3) = plt.subplots(1,3, figsize=(20,20))
+  f, (ax1,ax2,ax3) = plt.subplots(1,3, figsize=(20,20))
   ax1.imshow(now_three[:,:,0], cmap="Greens_r") # note colormap
   ax1.axis('off')
   ax1.set_title('Channel 1',size=15)
@@ -429,7 +434,6 @@ The following format works well for splitting two channels and merging. Some of 
 
 
 Easy way to work with channels. 
-
 
 
 

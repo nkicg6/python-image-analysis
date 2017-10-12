@@ -103,6 +103,7 @@ def scale_plot(img, imageSize, scale, units, scalebar_length, color):
     plt.gca().add_artist(scalebar)
 
 ## example data
+from matplotlib_scalebar.scalebar import ScaleBar
 import numpy as np # for image example
 
 np.random.seed(0)
@@ -202,7 +203,7 @@ now_three =np.dstack((two_channel_image[:,:,0], two_channel_image[:,:,1],
 
 # plot 2 channels of an image with scalebar
 
- f, (ax1,ax2,ax3) = plt.subplots(1,3, figsize=(20,20))
+f, (ax1,ax2,ax3) = plt.subplots(1,3, figsize=(20,20))
 ax1.imshow(now_three[:,:,0], cmap="Greens_r") # note colormap
 ax1.axis('off')
 ax1.set_title('Channel 1',size=15)
