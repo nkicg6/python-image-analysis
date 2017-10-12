@@ -1,1 +1,7 @@
 /*.org_archive
+*.pdf
+/*.pygtex
+*.pygtex
+/_minted-README/default.pygstyle
+/_minted-README/default-pyg-prefix.pygstyle
+/auto/README.el

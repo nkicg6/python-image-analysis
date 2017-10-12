@@ -1,3 +1,11 @@
+# Emacs-plot venv
+import os
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+if not 'img' in os.listdir("."):
+    os.mkdir('img')
+
 # using scikit-image to read images
 
 import skimage.io
@@ -94,34 +102,121 @@ def scale_plot(img, imageSize, scale, units, scalebar_length, color):
                         fixed_value = scalebar_length, color = color, frameon = False)
     plt.gca().add_artist(scalebar)
 
+## example data
+import numpy as np # for image example
+
+np.random.seed(0)
+example_image = np.random.rand(250,250,3)
+
+fig = plt.figure(figsize=(10,10))
+fig.suptitle('Experiment title here', fontsize=15)
+one = fig.add_subplot(131)
+plt.imshow(example_image[:,:,0])
+one.set_title('Time one', fontsize=15)
+plt.axis('off')
+two = fig.add_subplot(132)
+two.set_title('Time two', fontsize=15)
+plt.imshow(example_image[:,:,1], cmap='gray')
+plt.axis('off')
+three = fig.add_subplot(133)
+plt.imshow(example_image[:,:,2])
+three.set_title('Time three', fontsize=15)
+scalebar = ScaleBar(1,'um',location='lower right', fixed_value=25, color='black',frameon=True)
+plt.gca().add_artist(scalebar)
+plt.axis('off')
+#plt.tight_layout()
+plt.subplots_adjust(wspace=0.01)
+plt.subplots_adjust(top=1.35)
+plt.savefig('img/three_panel.png',bbox_inches='tight')
+
+np.random.seed(0)
+example_image = np.random.rand(250,250,3)
+
+roi_stim_coords_start = [50,50]
+roi_stim_coords_end = [150,150]
+
+# make line profiles
+
+
+pre_exposure_y_line = skimage.measure.profile_line(example_image[:,:,0], start_coords, stop_coords)
+post_exposure_y_line = skimage.measure.profile_line(example_image[:,:,1], start_coords, stop_coords)
+linescan_dist = (np.linalg.norm(np.array(roi_stim_coords_start) - np.array(roi_stim_coords_end)))
+stim_line_axis = np.linspace(0,linescan_dist+1,len(pre_exposure_y_line))
+
+# TP 1
+fig = plt.figure(figsize=(25,10))
+one = fig.add_subplot(141)
+plt.imshow(example_image[:,:,0], cmap='gray')
+one.set_title('Pre-exposure',fontsize=20)
+plt.plot([roi_stim_coords_start[0],roi_stim_coords_end[0]], 
+         [roi_stim_coords_start[1],roi_stim_coords_end[1]], 'r', linewidth=4)
+plt.axis('off')
+
+# TP 2
+two = fig.add_subplot(142)
+two.set_title('During exposure',fontsize=20)
+plt.imshow(example_image[:,:,1], cmap='gray')
+plt.plot([roi_stim_coords_start[0],roi_stim_coords_end[0]], 
+        [roi_stim_coords_start[1],roi_stim_coords_end[1]], 'r', linewidth=4)
+plt.axis('off')
+
+# TP 3 
+three = fig.add_subplot(143)
+plt.imshow(example_image[:,:,2], cmap='gray')
+three.set_title('post-exposure',fontsize=20)
+plt.axis('off')
+scalebar = ScaleBar(1,'um',location='lower left', fixed_value=25,color = 'black', frameon=True)
+plt.gca().add_artist(scalebar)
+plt.plot([roi_stim_coords_start[0],roi_stim_coords_end[0]], 
+         [roi_stim_coords_start[1],roi_stim_coords_end[1]], 'r', linewidth=4)
+
+# linescans
+four = fig.add_subplot(144)
+plt.plot(stim_line_axis, pre_exposure_y_line, '--', color='blue',linewidth=2, label='pre-exposure')
+plt.plot(stim_line_axis, post_exposure_y_line, '-', color='black',linewidth=2, label='post-exposure')
+four.spines['right'].set_visible(False)
+four.spines['top'].set_visible(False)
+four.legend(loc='lower center', fontsize=15)
+plt.ylabel('Fluorescence intensity (a.u.)',fontsize=15)
+plt.xlabel(r'Distance ($\mu{}m$)',fontsize=15)
+plt.subplots_adjust(wspace=None)
+fig.savefig('img/in_a_row.png', bbox_inches='tight')
+
 # create three channel image from 2 channel
 
 
 import numpy as np
 
-equal3 =np.dstack((auto_channel_equal,neun_channel_equal, 
-                   np.zeros_like(neun_channel_equal)))
+two_channel_image = np.random.rand(250,250,2)
+print('Original image shape is {}'.format(two_channel_image.shape))
+
+# make it three
+
+now_three =np.dstack((two_channel_image[:,:,0], two_channel_image[:,:,1],
+                   np.zeros_like(two_channel_image[:,:,0])))
+print('Three channel image shape is {}'.format(now_three.shape))
+
+two_channel_image = np.random.rand(250,250,2)
+now_three =np.dstack((two_channel_image[:,:,0], two_channel_image[:,:,1], 
+                      np.zeros_like(two_channel_image[:,:,0])))
 
 # plot 2 channels of an image with scalebar
 
-import matplotlib.pyplot as plt
-from matplotlib_scalebar.scalebar import ScaleBar
-
-
-f, (ax1,ax2,ax3) = plt.subplots(1,3, figsize=(20,20))
-ax1.imshow(equal3[:,:,0], cmap="Greens_r") # note colormap
+ f, (ax1,ax2,ax3) = plt.subplots(1,3, figsize=(20,20))
+ax1.imshow(now_three[:,:,0], cmap="Greens_r") # note colormap
 ax1.axis('off')
-ax1.set_title('Autofluorescence',size=15)
-ax2.imshow(equal3[:,:,1],cmap="Reds_r") # note colormap
-ax2.set_title('NeuN',size=15)
+ax1.set_title('Channel 1',size=15)
+ax2.imshow(now_three[:,:,1] ,cmap="Reds_r") # note colormap
+ax2.set_title('Channel 2',size=15)
 ax2.axis('off')
-scalebar = ScaleBar(neun_size, units, location = 'lower right', 
-                        fixed_value = 300, color = 'white', frameon = False)
+scalebar = ScaleBar(1, units, location = 'lower right', 
+                        fixed_value = 25, color = 'black', frameon = True)
 ax3.imshow(equal3)
 plt.gca().add_artist(scalebar)
 ax3.set_title('Merge', size=15)
 ax3.axis('off')
 plt.tight_layout()
+fig.savefig('img/fake_channels.png', bbox_inches='tight')
 
 # draw a line profile interactively
 
