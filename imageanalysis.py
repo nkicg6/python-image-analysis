@@ -291,10 +291,10 @@ def max_project(image, start_slice = 0, stop_slice = None):
         optional args = start_slice, stop_slice
         range to max project into
         returns new projection"""
-    if stop is None:
-        stop = 0
-    print(stop)
-    max_proj = [image[i,:,:] for i in range(start,image.shape[stop])]
+    if stop_slice is None:
+        stop_slice = image.shape[0]
+    print(stop_slice)
+    max_proj = [image[i,:,:] for i in range(start_slice,stop_slice)]
     return np.maximum.reduce(max_proj)
 
 # draw a line profile interactively
