@@ -130,6 +130,66 @@ plt.subplots_adjust(wspace=0.01)
 plt.subplots_adjust(top=1.35)
 plt.savefig('img/three_panel.png',bbox_inches='tight')
 
+import skimage.measure
+# make line profiles
+
+np.random.seed(0)
+example_image = np.random.rand(250,250,3)
+
+start_coords = [50,50]
+stop_coords = [150,150]
+
+# make line profiles
+
+
+start_y_line = skimage.measure.profile_line(example_image[:,:,0], start_coords, stop_coords)
+middle_y_line = skimage.measure.profile_line(example_image[:,:,1], start_coords, stop_coords)
+last_y_line = skimage.measure.profile_line(example_image[:,:,2], start_coords, stop_coords)
+linescan_dist = (np.linalg.norm(np.array(start_coords) - np.array(stop_coords)))
+line_axis = np.linspace(0,linescan_dist+1,len(start_y_line))
+
+# column 1
+fig = plt.figure(figsize=(10,8))
+fig.suptitle('1040nm exposure', fontsize=15)
+one = fig.add_subplot(231)
+plt.imshow(example_image[:,:,0], cmap='gray')
+plt.plot([start_coords[0],stop_coords[0]], [start_coords[1],stop_coords[1]],'r-', linewidth=4)
+one.set_title('Start exposure', fontsize=15)
+plt.axis('off')
+onescan = fig.add_subplot(234)
+plt.plot(line_axis, start_y_line,'-', color='black')
+onescan.spines['right'].set_visible(False)
+onescan.spines['top'].set_visible(False)
+plt.ylabel('Fluorescence intensity (AU)', fontsize=15)
+plt.xlabel(r'Distance ($\mu{}m$)', fontsize=15)
+
+
+#column2
+two = fig.add_subplot(232)
+two.set_title('22 s', fontsize=15)
+plt.imshow(example_image[:,:,1], cmap='gray')
+plt.plot([start_coords[0],stop_coords[0]], [start_coords[1],stop_coords[1]],'r-', linewidth=4)
+plt.axis('off')
+middlescan = fig.add_subplot(235)
+plt.plot(line_axis, middle_y_line,'-', color='black')
+plt.axis('off')
+
+
+#column3
+three = fig.add_subplot(233)
+plt.imshow(example_image[:,:,2], cmap='gray')
+plt.plot([start_coords[0],stop_coords[0]], [start_coords[1],stop_coords[1]],'r-', linewidth=4)
+three.set_title('45 s', fontsize=15)
+plt.axis('off')
+scalebar = ScaleBar(1,'um',location='lower right', fixed_value=25,color = 'black', frameon=True)
+plt.gca().add_artist(scalebar)
+lastscan = fig.add_subplot(236)
+plt.plot(line_axis, last_y_line, '-', color='black')
+plt.axis('off')
+plt.subplots_adjust(wspace=0.01)
+plt.subplots_adjust(top=.9)
+fig.savefig('img/three_panel_with_scans.png', bbox_inches='tight')
+
 np.random.seed(0)
 example_image = np.random.rand(250,250,3)
 
@@ -202,22 +262,40 @@ now_three =np.dstack((two_channel_image[:,:,0], two_channel_image[:,:,1],
                       np.zeros_like(two_channel_image[:,:,0])))
 
 # plot 2 channels of an image with scalebar
-
-f, (ax1,ax2,ax3) = plt.subplots(1,3, figsize=(20,20))
-ax1.imshow(now_three[:,:,0], cmap="Greens_r") # note colormap
-ax1.axis('off')
-ax1.set_title('Channel 1',size=15)
-ax2.imshow(now_three[:,:,1] ,cmap="Reds_r") # note colormap
-ax2.set_title('Channel 2',size=15)
-ax2.axis('off')
+fig = plt.figure(figsize=(10,10))
+one = fig.add_subplot(131)
+plt.imshow(now_three[:,:,0], cmap="Greens_r") # note colormap
+one.axis('off')
+one.set_title('Channel 1',size=15)
+two = fig.add_subplot(132)
+plt.imshow(now_three[:,:,1] ,cmap="Reds_r") # note colormap
+two.set_title('Channel 2',size=15)
+two.axis('off')
 scalebar = ScaleBar(1, units, location = 'lower right', 
                         fixed_value = 25, color = 'black', frameon = True)
-ax3.imshow(equal3)
+three = fig.add_subplot(133)
+plt.imshow(now_three)
 plt.gca().add_artist(scalebar)
-ax3.set_title('Merge', size=15)
-ax3.axis('off')
+three.set_title('Merge', size=15)
+three.axis('off')
 plt.tight_layout()
 fig.savefig('img/fake_channels.png', bbox_inches='tight')
+
+## max project
+
+import numpy as np
+
+
+def max_project(image, start_slice = 0, stop_slice = None):
+    """ takes ONE CHANNEL nd array image
+        optional args = start_slice, stop_slice
+        range to max project into
+        returns new projection"""
+    if stop is None:
+        stop = 0
+    print(stop)
+    max_proj = [image[i,:,:] for i in range(start,image.shape[stop])]
+    return np.maximum.reduce(max_proj)
 
 # draw a line profile interactively
 

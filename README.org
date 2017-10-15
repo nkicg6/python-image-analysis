@@ -445,6 +445,31 @@ Easy way to work with channels.
 
 more to come...
 
+* Processing
+** Max projections
+Shocked there was not already a method for this?
+
+
+#+BEGIN_SRC python  :results output
+## max project
+
+import numpy as np
+
+
+def max_project(image, start_slice = 0, stop_slice = None):
+    """ takes ONE CHANNEL nd array image
+        optional args = start_slice, stop_slice
+        range to max project into
+        returns new projection"""
+    if stop is None:
+        stop = 0
+    print(stop)
+    max_proj = [image[i,:,:] for i in range(start,image.shape[stop])]
+    return np.maximum.reduce(max_proj)
+#+END_SRC
+
+I will expand this for multichannel images and also implement mean projection, sum projection etc. 
+Example coming soon. 
 * Analysis
 
 Interactive line profiles are cool!
