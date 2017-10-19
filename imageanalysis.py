@@ -18,57 +18,133 @@ def read_img(path, asfloat=False):
     img = img_as_float(img)
     return img
 
-# my function for parsing metadata from ome-tiffs and imagej tiffs
+# main class 
 
 import re
 import tifffile
-import xml.etree.ElementTree as ET
+import skimage.io
 
 
-def metadata(path):
-    """accepts the path to an ome-tif file, or imageJ tif file.
-    Attempts to validates image dimensions, returns pixel size 
-    and units
-    following ome-tif xml schema:
-    http://www.openmicroscopy.org/Schemas/OME/2016-06"""
-    try:
-        with tifffile.TiffFile(path) as tif:
-            if tif.is_ome:
-                raw_metadata = tif[0].image_description
-                parse = ET.fromstring(raw_metadata)
-                pixels = parse.find('.//{http://www.openmicroscopy.org/Schemas/OME/2016-06}Pixels')
-                # ensure all pixel units are the same
-                assert pixels.get('PhysicalSizeXUnit') == pixels.get('PhysicalSizeZUnit') == \
-                pixels.get('PhysicalSizeYUnit')
-                units = pixels.get('PhysicalSizeXUnit')
-                assert pixels.get('PhysicalSizeY') == pixels.get('PhysicalSizeX')
-                # save pixel size
-                size = pixels.get('PhysicalSizeY')
-                # Z can be easily implemented (pizels.get(PhysicalSizeZ))
-                return float(size), units
-            else:
-                # hopefully it is imagej format
-                raw_metadata = tif[0]
-                # ensure xy pixels are the same size
-                assert raw_metadata.x_resolution == raw_metadata.y_resolution
-                # imageJ encodes as 'pixels per micron' so we should convert back
-                size = 1/(raw_metadata.y_resolution[0]/raw_metadata.y_resolution[-1])
-                check_units = raw_metadata.image_description.decode('utf-8')
-                # regex to search for units. 
-                regex_check = re.search('(?<=unit=)\w+',check_units)
-                if regex_check.group(0) == 'micron':
-                    # If micron, return Unicode micron
-                    units = '\xb5m'
-                    return float(size), units
-                else:
-                    return 'Could not determine pixel size. expected micron \
-                    got >> {}'.format(regex_check.group(0))
-    except AssertionError:
-        print("Image dimensions or units do not match")
-    except ValueError as e:
-        print("Incompatible format >>> {}".format(e))
-    except Exception as x:
-        print("Error. >>> {}".format(x))
+class ImageInfo:
+    """
+    Class to hold tiff image and metadata.
+    Arguments:
+    ==========
+    path: path to a valid tiff
+    ==========
+    Attempts to parse OME metadata. If it cannot, then it tries to
+    parse imagej format. If this fails, None is returned for these
+    attributes.
+
+    """
+    def __init__(self, path):
+        self.__path = path
+        self.__meta_page = self.parse_tif()
+        self.__units_and_len = self.parse_ome_metadata()
+        self.__pixel_size = self.__units_and_len[0]
+        self.__unit = self.__units_and_len[1]
+        self.__image = self.read_image()
+        self.__shape = self.image.shape
+
+
+    def parse_tif(self):
+        with tifffile.TiffFile(self.__path) as tif:
+            meta_page = tif[0]
+            return meta_page
+
+
+    def parse_ome_metadata(self):
+        """accepts the path to an ome-tif file, or imageJ tif file.
+        Attempts to validates image dimensions, returns pixel size
+        and
+        """
+        meta_page = self.__meta_page
+        omeXY = re.compile(r'PhysicalSize[XY]\s*\=\s*\"(\d+\.\d+)\"', re.I)
+        omeXY_units = re.compile(r'PhysicalSize[XY]Unit\s*\=\s*\"(\D+)\"\s', re.I)
+        blob = meta_page.image_description.decode('utf-8')
+        findomeUnits = omeXY_units.findall(blob)
+        XY = omeXY.findall(blob)
+        if len(XY) and len(findomeUnits) == 2:
+            try:
+                assert XY[0] == XY[1]
+                unit_as_float = float(XY[0].strip(' "'))
+                return unit_as_float, findomeUnits[0]
+            except AssertionError:
+                print(f'OME parsing X resolution {XY[0]}!= {XY[1]}, returning None')
+                return None, None
+        else:
+            print('Ome data not found, attmepting imagej parse')
+            return self.parse_imagej_meta()
+
+
+    def parse_imagej_meta(self):
+        """
+        Only called if Ome parsing fails
+        method to parse imagej formats
+        """
+        print('WARNING ImagJ parsing is not as accurate!!')
+        meta_page = self.__meta_page
+        blob = self.__meta_page.image_description.decode('utf-8')
+        try:
+            XY = meta_page.x_resolution, meta_page.y_resolution
+            find_ImageJ_units = re.findall(r'unit=(.+)',blob)
+            if find_ImageJ_units[0] == 'micron':
+                find_ImageJ_units = 'µm'
+                if len(find_ImageJ_units) == 0:
+                    print('ImageJ units were not found. Returning None')
+                    find_ImageJ_units = None
+                assert XY[0] == XY[1]
+                return XY[0][0]/XY[0][1], find_ImageJ_units
+        except AssertionError:
+            print(f'ImageJ parsing X resolution {XY[0]}!={XY[1]}, returning None')
+            return None, None
+        except AttributeError:
+            print('Could not parse, returning None,None')
+            return None, None
+        except Exception as e:
+            print(f'unknown exception {e}')
+            return None, None
+
+
+    def read_image(self):
+        """
+        read image using skimage
+        """
+        return skimage.io.imread(self.__path)
+
+    @property
+    def image(self):
+        return self.__image
+
+
+    @property
+    def pixel_size(self):
+        """
+        return the pixel size
+        """
+        return self.__pixel_size
+
+    @property
+    def pixel_unit(self):
+        """
+        return the pixel unit
+        """
+        return self.__unit
+
+    @property
+    def get_path(self):
+        """
+        return the original image path
+        """
+        return self.__path
+
+    @property
+    def get_meta_blob(self):
+        """
+        return the metadata blob taken from
+        tifffile.TiffFile page 0 .image_description attribute
+        """
+        blob = self.__meta_page.image_description.decode('utf-8')
 
 # example of metadata returned form an imageJ tif
 
