@@ -12,10 +12,6 @@ My goal for writing scientific papers is to work in org-mode and have all my fig
 
 This document is [[http://orgmode.org/manual/Extracting-source-code.html][tangled]] into the accompanying python source doc in the repo and can be downloaded and used freely.
 
-* As a module
-I am working on integrating these into a PyPi module. I made a class to contain images and the accompanying metadata which is [[https://github.com/nkicg6/imagetools][here]]. I will keep updating this as I go/need. 
-
-Suggestions and contributions to either project are welcome!
 * Links and resources
 Here is a collection of links and resources I have come across. 
 - [[http://scikit-image.org/docs/dev/auto_examples/index.html][Scikit image tutorials]] are excellent. This is one of the best resources I have found.
@@ -66,11 +62,10 @@ Next, images are read in using skimage like so
 
 ** Parse metadata
    
-Images are converted to [[https://www.openmicroscopy.org/][OME-Tiff]] format because this is an open source data format that preserves all metadata and can be opened by virtually any image reader. The following class is from my [[https://github.com/nkicg6/imagetools][imagetools]] repo. It uses the  =tifffile= library to read the image metadata from the first page of the tiff file. 
+Images are converted to [[https://www.openmicroscopy.org/][OME-Tiff]] format because this is an open source data format that preserves all metadata and can be opened by virtually any image reader. The following class parses and stores the data using the  =tifffile= library to read the image metadata from the first page of the tiff file. 
 
 #+NAME: Parse metadata
 #+BEGIN_SRC python :results output
-  # main class 
 
   import re
   import tifffile
